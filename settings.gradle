@@ -1,0 +1,4 @@
+rootProject.name='DocDetect'
+include ':opencv'
+project(':opencv').projectDir = new File('./sdk')
+include ':app'

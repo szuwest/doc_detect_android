@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/background_dark"
+    android:orientation="vertical">
+
+    <com.wegene.docdetect.view.CropImageView
+        android:id="@+id/iv_crop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        app:civShowEdgeMidPoint="true"
+        app:civLineColor="@color/colorPrimary"
+        app:civMagnifierCrossColor="@color/colorPrimaryDark"/>
+
+    <LinearLayout
+        android:id="@+id/ll_btn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:background="@null"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_cancel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="#0f000000"
+            android:textColor="#ffffff"
+            android:layout_weight="1"
+            android:text="cancel"/>
+
+        <Button
+            android:id="@+id/btn_ok"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="#0f000000"
+            android:textColor="#ffffff"
+            android:text="ok"/>
+
+    </LinearLayout>
+    <FrameLayout
+        android:id="@+id/layout_show"
+        android:background="#000"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:id="@+id/iv_show" />
+    </FrameLayout>
+</FrameLayout>

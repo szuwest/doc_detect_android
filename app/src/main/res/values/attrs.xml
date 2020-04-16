@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="CropImageView">
+        <attr name="civMaskAlpha" format="integer"/>
+        <attr name="civShowGuideLine" format="boolean"/>
+        <attr name="civLineColor" format="color"/>
+        <attr name="civLineWidth" format="dimension"/>
+        <attr name="civShowMagnifier" format="boolean"/>
+        <attr name="civMagnifierCrossColor" format="color"/>
+        <attr name="civGuideLineWidth" format="dimension"/>
+        <attr name="civGuideLineColor" format="color"/>
+        <attr name="civPointFillColor" format="color"/>
+        <attr name="civPointFillAlpha" format="integer"/>
+        <attr name="civPointColor" format="color"/>
+        <attr name="civPointWidth" format="dimension"/>
+        <attr name="civShowEdgeMidPoint" format="boolean"/>
+        <attr name="civAutoScanEnable" format="boolean"/>
+    </declare-styleable>
+
+</resources>
