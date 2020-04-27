@@ -15,6 +15,7 @@ import android.graphics.Point;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.WindowManager;
@@ -24,6 +25,7 @@ import android.widget.TextView;
 import com.wegene.docdetect.utils.CropUtils;
 import com.wegene.docdetect.utils.DetectHelper;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -101,85 +103,64 @@ public class DocDetectActivity extends CameraActivity implements CvCameraViewLis
     private static final int thickness = 4;
     private Handler handler = new Handler();
     private Point[] cornerPoints;
+    //回调是在非主线程
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
         final Mat matRbga = inputFrame.rgba();
         if (matRbga.height() == 0 || isStop) return matRbga;
         if (isFinishing() || isDestroyed()) return matRbga;
+        if (Looper.getMainLooper() == Looper.myLooper()) {
+            Log.d(TAG, "主线程");
+        }
 
-        AsyncTask.execute(new Runnable() {
+        long start = System.currentTimeMillis();
+        Log.d(TAG, "camera frame width=" + matRbga.width() + " height=" + matRbga.height());
+        final Bitmap bitmap = Bitmap.createBitmap(matRbga.width(), matRbga.height(), Bitmap.Config.RGB_565);
+        Utils.matToBitmap(matRbga, bitmap);
+        Log.d(TAG, "matToBitmap spend " + (System.currentTimeMillis() - start));
+        start = System.currentTimeMillis();
+        final Bitmap hedBitmap = SmartCropper.hedDetect(bitmap);
+        long hedSpend = System.currentTimeMillis() - start;
+        Log.d(TAG, "hedImage width=" + hedBitmap.getWidth() + " height=" + hedBitmap.getHeight());
+        handler.post(new Runnable() {
             @Override
             public void run() {
-                if (isFinishing() || isDestroyed()) return;
-                if (matRbga.height() == 0) return;
-
-                long start = System.currentTimeMillis();
-                Log.d(TAG, "camera frame width=" + matRbga.width() + " height=" + matRbga.height());
-                final Bitmap bitmap = Bitmap.createBitmap(matRbga.width(), matRbga.height(), Bitmap.Config.RGB_565);
-                Utils.matToBitmap(matRbga, bitmap);
-                Log.d(TAG, "matToBitmap spend " + (System.currentTimeMillis() - start));
-                start = System.currentTimeMillis();
-                final Bitmap hedBitmap = SmartCropper.hedDetect(bitmap);
-                long hedSpend = System.currentTimeMillis() - start;
-                Log.d(TAG, "hedImage width=" + hedBitmap.getWidth() + " height=" + hedBitmap.getHeight());
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        hedDetectImageView.setImageBitmap(hedBitmap);
-                    }
-                });
-                start = System.currentTimeMillis();
-//                final Point[] fourPoint = SmartCropper.scanPoints(bitmap, hedBitmap);
-                final Point[] fourPoint = SmartCropper.scanPoints2(bitmap, hedBitmap);
-                long scanSpend = System.currentTimeMillis() - start;
-                final String info = "hed spend " + hedSpend + "\n" + "scan spend " + scanSpend;
-                Log.d(TAG, info);
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        infoTextView.setText(info);
-                    }
-                });
-
-//                final Point[] fourPoint = SmartCropper.scan(bitmap);
-
-                if (CropUtils.checkPoints(fourPoint)) {
-                    //上次检测的点跟这次基本一样，就裁剪
-                    if (DetectHelper.isRectSimilar(cornerPoints, fourPoint) && !isStop) {
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                gotoCrop(bitmap, fourPoint);
-                            }
-                        });
-                    }
-                    cornerPoints = fourPoint;
-                }
-
-                if (cornerPoints != null) {
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (matRbga.height() == 0 || isStop) return;
-                            Imgproc.line(matRbga, CropUtils.convert(cornerPoints[0]),CropUtils.convert(cornerPoints[1]),LINE_COLOR,thickness);
-                            Imgproc.line(matRbga, CropUtils.convert(cornerPoints[1]),CropUtils.convert(cornerPoints[2]),LINE_COLOR,thickness);
-                            Imgproc.line(matRbga, CropUtils.convert(cornerPoints[2]),CropUtils.convert(cornerPoints[3]),LINE_COLOR,thickness);
-                            Imgproc.line(matRbga, CropUtils.convert(cornerPoints[3]),CropUtils.convert(cornerPoints[0]),LINE_COLOR,thickness);
-                        }
-                    });
-                }
+                hedDetectImageView.setImageBitmap(hedBitmap);
             }
         });
-        if (cornerPoints != null) {
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    Imgproc.line(matRbga, CropUtils.convert(cornerPoints[0]),CropUtils.convert(cornerPoints[1]),LINE_COLOR,thickness);
-                    Imgproc.line(matRbga, CropUtils.convert(cornerPoints[1]),CropUtils.convert(cornerPoints[2]),LINE_COLOR,thickness);
-                    Imgproc.line(matRbga, CropUtils.convert(cornerPoints[2]),CropUtils.convert(cornerPoints[3]),LINE_COLOR,thickness);
-                    Imgproc.line(matRbga, CropUtils.convert(cornerPoints[3]),CropUtils.convert(cornerPoints[0]),LINE_COLOR,thickness);
-                }
-            });
+        start = System.currentTimeMillis();
+//                final Point[] fourPoint = SmartCropper.scanPoints(bitmap, hedBitmap);
+        final Point[] fourPoint = SmartCropper.scanPoints2(bitmap, hedBitmap);
+        long scanSpend = System.currentTimeMillis() - start;
+        final String info = "hed spend " + hedSpend + "\n" + "scan spend " + scanSpend;
+        Log.d(TAG, info);
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                infoTextView.setText(info);
+            }
+        });
+
+//      final Point[] fourPoint = SmartCropper.scan(bitmap);
+        if (CropUtils.checkPoints(fourPoint)) {
+            Log.d(TAG, "find 4 points=" + Arrays.toString(fourPoint));
+            //上次检测的点跟这次基本一样，就裁剪
+            if (DetectHelper.isRectSimilar(cornerPoints, fourPoint) && !isStop) {
+                isStop = true;
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        gotoCrop(bitmap, fourPoint);
+                    }
+                });
+            }
+            cornerPoints = fourPoint;
+
+            Imgproc.line(matRbga, CropUtils.convert(cornerPoints[0]),CropUtils.convert(cornerPoints[1]),LINE_COLOR,thickness);
+            Imgproc.line(matRbga, CropUtils.convert(cornerPoints[1]),CropUtils.convert(cornerPoints[2]),LINE_COLOR,thickness);
+            Imgproc.line(matRbga, CropUtils.convert(cornerPoints[2]),CropUtils.convert(cornerPoints[3]),LINE_COLOR,thickness);
+            Imgproc.line(matRbga, CropUtils.convert(cornerPoints[3]),CropUtils.convert(cornerPoints[0]),LINE_COLOR,thickness);
         }
+
         return matRbga;
     }
 

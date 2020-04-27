@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.text.TextUtils;
 
 import org.tensorflow.lite.Interpreter;
+import org.tensorflow.lite.gpu.GpuDelegate;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -38,6 +39,10 @@ public class ImageDetector {
         }
         MappedByteBuffer tfliteModel = loadModelFile(context, modelFile);
         Interpreter.Options tfliteOptions = new Interpreter.Options();
+        tfliteOptions.setNumThreads(3);
+        // Initialize interpreter with GPU delegate
+        GpuDelegate gpuDelegate = new GpuDelegate();
+        tfliteOptions.addDelegate(gpuDelegate);
         tflite = new Interpreter(tfliteModel, tfliteOptions);
         imgData = ByteBuffer.allocateDirect(desiredSize * desiredSize * 3 * Float.SIZE / Byte.SIZE);
         imgData.order(ByteOrder.nativeOrder());
@@ -52,7 +57,7 @@ public class ImageDetector {
         }
         imgData.clear();
         outImgData.clear();
-        bitmap = Bitmap.createScaledBitmap(bitmap, desiredSize, desiredSize, false);
+        bitmap = Bitmap.createScaledBitmap(bitmap, desiredSize, desiredSize, true);
         convertBitmapToByteBuffer(bitmap);
         tflite.run(imgData, outImgData);
         return convertOutputBufferToBitmap(outImgData);
@@ -85,7 +90,7 @@ public class ImageDetector {
         int[] pixels = new int[desiredSize * desiredSize];
         for (int i = 0; i < desiredSize * desiredSize; i++) {
             float val = outImgData.getFloat();
-            if (val > 0.2) {
+            if (val > 0) {
                 pixels[i] = 0xFFFFFFFF;
             } else {
                 pixels[i] = 0xFF000000;
