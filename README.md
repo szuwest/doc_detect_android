@@ -9,3 +9,6 @@
 [openCV下载](https://opencv.org/releases/)
 
 对应的iOS版本请看：https://github.com/szuwest/doc_detect_ios
+
+如果对你有用或许你可以打赏
+![打赏](https://raw.githubusercontent.com/szuwest/szuwest.github.io/master/images/2018-02-21%20133111.jpg)
