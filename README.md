@@ -7,3 +7,5 @@
 [hed-tutorial-for-document-scanning](https://github.com/fengjian0106/hed-tutorial-for-document-scanning)
 
 [openCV下载](https://opencv.org/releases/)
+
+对应的iOS版本请看：https://github.com/szuwest/doc_detect_ios
